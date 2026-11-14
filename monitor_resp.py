@@ -17,8 +17,8 @@ DAC_RETARDO_S = 1.0                         # retardo entre la muestra y su sali
 MODO_PAGINA = False                         # False = el eje se desliza; True = salta de a 10 s (0-10, 10-20...)
 MODO_CRUDO = False                          # True: imprime los bytes tal cual llegan (diagnóstico)
 APNEA_S = 12                                # segundos sin respirar para declarar apnea (ref_apnea)
-UMBRAL_ALTO = 3000                          # UMBRAL_ALTO del firmware: x por encima = inspiración
-UMBRAL_BAJO = 2500                          # UMBRAL_BAJO del firmware: x debe bajar de acá
+UMBRAL_INSP = 5                             # UMBRAL_INSP del firmware: x por debajo = inspiración
+UMBRAL_ESP = 1000                           # UMBRAL_ESP del firmware: x debe subir de acá
 
 # paleta tipo monitor de ventilador (fondo oscuro, números celestes, botones grises)
 C = {"fondo": "#0a0e13",                    # fondo de la ventana
@@ -32,7 +32,7 @@ C = {"fondo": "#0a0e13",                    # fondo de la ventana
      "boton": "#3a4048",                    # botones grises
      "boton_borde": "#5a626b",              # borde de los botones
      "rojo": "#e5383b",                     # alarma
-     "naranja": "#f4a261",                  # umbral bajo y errores
+     "naranja": "#f4a261",                  # umbral esp y errores
      "verde": "#5fd38d"}                    # estado normal
 
 tiempo = deque(maxlen=2000)                 # instante de cada muestra, en segundos desde el inicio
@@ -148,8 +148,8 @@ alerta_txt = fig.text(0.9375, 0.965, "i", fontsize=16, weight="bold",
 ax = fig.add_axes([0.05, 0.27, 0.60, 0.62], facecolor=C["panel"])        # posición del gráfico
 (linea,) = ax.plot([], [], lw=1.8, color=C["cian"])                      # curva del sensor (celeste)
 (linea_dac,) = ax.plot([], [], lw=1.4, color=C["dac"], alpha=0.9)        # curva de la salida del DAC (violeta), superpuesta
-ax.axhline(UMBRAL_ALTO, color=C["rojo"], ls="--", lw=0.8, alpha=0.7)     # umbral de inspiración
-ax.axhline(UMBRAL_BAJO, color=C["naranja"], ls="--", lw=0.8, alpha=0.7)  # umbral para habilitar la siguiente
+ax.axhline(UMBRAL_INSP, color=C["rojo"], ls="--", lw=0.8, alpha=0.7)     # umbral de inspiración
+ax.axhline(UMBRAL_ESP, color=C["naranja"], ls="--", lw=0.8, alpha=0.7)   # umbral para habilitar la siguiente
 ax.set_xlim(0, VENTANA_S)                   # arranca mostrando de 0 a 10 s
 ax.set_ylim(0, 4095)                        # rango completo del ADC de 12 bits
 ax.xaxis.set_major_locator(MultipleLocator(1))        # marca con número cada 1 s
@@ -188,8 +188,8 @@ def boton(i, etiqueta, valor):              # botón gris con el valor en grande
              ha="center", va="center")
 
 
-boton(0, "Umbral alto", str(UMBRAL_ALTO))   # los 5 botones muestran la configuración
-boton(1, "Umbral bajo", str(UMBRAL_BAJO))
+boton(0, "Umbral inspiración", str(UMBRAL_INSP))   # los 5 botones muestran la configuración
+boton(1, "Umbral espiración", str(UMBRAL_ESP))
 boton(2, "Apnea (s)", str(APNEA_S))
 boton(3, "Ventana (s)", str(VENTANA_S))
 boton(4, "Muestreo (Hz)", str(int(round(1 / MUESTRA_S))))
