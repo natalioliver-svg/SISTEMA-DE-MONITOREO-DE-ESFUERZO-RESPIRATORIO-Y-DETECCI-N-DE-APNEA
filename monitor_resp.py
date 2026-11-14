@@ -13,7 +13,7 @@ PUERTO = "COM13"                            # puerto del LPC (en Linux: /dev/tty
 BAUD = 115200                               # tiene que coincidir con el firmware
 VENTANA_S = 10                              # segundos que se ven a la vez
 MUESTRA_S = 0.01                            # tiempo entre muestras (10 ms)
-DAC_RETARDO_S = 1.0                         # CAMBIO: retardo entre la muestra y su salida por el DAC (estimado, ver nota)
+DAC_RETARDO_S = 1.0                         # retardo entre la muestra y su salida por el DAC (estimado, ver nota)
 MODO_PAGINA = False                         # False = el eje se desliza; True = salta de a 10 s (0-10, 10-20...)
 MODO_CRUDO = False                          # True: imprime los bytes tal cual llegan (diagnóstico)
 APNEA_S = 12                                # segundos sin respirar para declarar apnea (ref_apnea)
@@ -27,7 +27,7 @@ C = {"fondo": "#0a0e13",                    # fondo de la ventana
      "borde": "#2b3540",                    # bordes y grilla
      "tenue": "#8aa0b3",                    # textos secundarios
      "cian": "#3ec1f0",                     # números y curva del sensor
-     "dac": "#c77dff",                      # CAMBIO: curva de la salida del DAC
+     "dac": "#c77dff",                      # curva de la salida del DAC
      "texto": "#e8edf2",                    # textos principales
      "boton": "#3a4048",                    # botones grises
      "boton_borde": "#5a626b",              # borde de los botones
@@ -37,7 +37,7 @@ C = {"fondo": "#0a0e13",                    # fondo de la ventana
 
 tiempo = deque(maxlen=2000)                 # instante de cada muestra, en segundos desde el inicio
 datos = deque(maxlen=2000)                  # señal x (12 bits); guarda 20 s, más que la ventana
-dac_v = deque(maxlen=2000)                  # CAMBIO: valor del DAC (10 bits) multiplicado por 4 para compararlo con x
+dac_v = deque(maxlen=2000)                  # valor del DAC (10 bits) multiplicado por 4 para compararlo con x
 resp_t = deque(maxlen=5)                    # instantes de las últimas respiraciones
 candado = threading.Lock()                  # evita leer y escribir datos a la vez
 detener = threading.Event()                 # aviso al hilo lector para que termine
@@ -61,7 +61,7 @@ def lector():                               # corre en un hilo aparte
         return                              # sin puerto no hay nada que leer
     with s, open("sesion.csv", "w", newline="") as f:  # cierra los dos al terminar
         w = csv.writer(f)                   # escritor de CSV
-        w.writerow(["t_s", "x_adc", "cant_respi", "resp_min", "v_dac"])  # CAMBIO: agrega la columna del DAC
+        w.writerow(["t_s", "x_adc", "cant_respi", "resp_min", "v_dac"])  # agrega la columna del DAC
         t0 = time.time()                    # instante cero de la sesión
         t_flush = t0                        # última vez que se guardó en disco
         s.reset_input_buffer()              # descarta lo que haya llegado antes de empezar
@@ -82,7 +82,7 @@ def lector():                               # corre en un hilo aparte
                         x = int(p[1])               # valor del ADC, 12 bits (0 a 4095)
                         c = int(p[2])               # CANT_RESPI: respiraciones del minuto en curso
                         r = int(p[3])               # CANT_RESPI_UART: resp/min del último minuto
-                        v = int(p[4]) if len(p) >= 5 else None   # CAMBIO: valor del DAC (0 a 1023); None si el firmware no lo manda
+                        v = int(p[4]) if len(p) >= 5 else None   # valor del DAC (0 a 1023); None si el firmware no lo manda
                         ahora = time.time()         # instante de llegada de la línea
                         # Las líneas llegan en ráfagas de 50 cada 0,5 s: dentro de la ráfaga las
                         # muestras se espacian 10 ms, y al empezar una nueva se re-sincroniza.
@@ -97,7 +97,7 @@ def lector():                               # corre en un hilo aparte
                         est["t_m"] = t_m            # recuerda el instante de esta muestra
                         tiempo.append(t_m)          # guarda el tiempo
                         datos.append(x)             # agrega la muestra al gráfico
-                        dac_v.append(v * 4 if v is not None else float("nan"))  # CAMBIO: el DAC (10 bits) x4 queda en la escala de 12 bits
+                        dac_v.append(v * 4 if v is not None else float("nan"))  # el DAC (10 bits) x4 queda en la escala de 12 bits
                         est["x"] = x                # guarda el último valor
                         est["rpm"] = r              # guarda la frecuencia respiratoria
                         if est["cant"] is not None and c > est["cant"]:  # el contador subió
@@ -108,7 +108,7 @@ def lector():                               # corre en un hilo aparte
                         est["cant"] = c             # si bajó (reinicio por minuto) solo se actualiza
                         est["validas"] += 1         # una línea más entendida
                         est["ultimo"] = ahora       # sirve para detectar "sin datos" y nuevas ráfagas
-                    w.writerow([round(time.time() - t0, 2), x, c, r, v])  # CAMBIO: tiempo y los cuatro valores
+                    w.writerow([round(time.time() - t0, 2), x, c, r, v])  # tiempo y los cuatro valores
                 except (ValueError, IndexError):    # línea cortada o con basura
                     est["malas"] += 1               # se cuenta y se ignora
                 if time.time() - t_flush > 1:       # cada segundo
@@ -147,7 +147,7 @@ alerta_txt = fig.text(0.9375, 0.965, "i", fontsize=16, weight="bold",
 # gráfico de la señal
 ax = fig.add_axes([0.05, 0.27, 0.60, 0.62], facecolor=C["panel"])        # posición del gráfico
 (linea,) = ax.plot([], [], lw=1.8, color=C["cian"])                      # curva del sensor (celeste)
-(linea_dac,) = ax.plot([], [], lw=1.4, color=C["dac"], alpha=0.9)        # CAMBIO: curva de la salida del DAC (violeta), superpuesta
+(linea_dac,) = ax.plot([], [], lw=1.4, color=C["dac"], alpha=0.9)        # curva de la salida del DAC (violeta), superpuesta
 ax.axhline(UMBRAL_ALTO, color=C["rojo"], ls="--", lw=0.8, alpha=0.7)     # umbral de inspiración
 ax.axhline(UMBRAL_BAJO, color=C["naranja"], ls="--", lw=0.8, alpha=0.7)  # umbral para habilitar la siguiente
 ax.set_xlim(0, VENTANA_S)                   # arranca mostrando de 0 a 10 s
@@ -162,7 +162,7 @@ ax.tick_params(colors=C["tenue"], which="both")       # marcas en gris azulado
 ax.grid(True, color=C["borde"], lw=0.6)               # grilla tenue
 for lado in ax.spines.values():             # marco del gráfico
     lado.set_color(C["borde"])
-leyenda = ax.legend([linea, linea_dac], ["Sensor (ADC)", "Salida del DAC"],   # CAMBIO: leyenda de las dos curvas
+leyenda = ax.legend([linea, linea_dac], ["Sensor (ADC)", "Salida del DAC"],   # leyenda de las dos curvas
                     loc="upper left", facecolor=C["panel"], edgecolor=C["borde"],
                     labelcolor=C["tenue"], fontsize=9, framealpha=0.9)
 
@@ -200,12 +200,12 @@ def actualizar(_):                          # se llama cada 50 ms
     with candado:                           # copia consistente de los datos
         t = list(tiempo)                    # instantes de las muestras
         y = list(datos)                     # señal de la ventana
-        d = list(dac_v)                     # CAMBIO: valores del DAC
+        d = list(dac_v)                     # valores del DAC
         e = dict(est)                       # estado actual
         tr = list(resp_t)                   # instantes de las últimas respiraciones
     if t:                                   # solo si ya llegó algo
         linea.set_data(t, y)                # redibuja la curva del sensor
-        linea_dac.set_data([ti + DAC_RETARDO_S for ti in t], d)   # CAMBIO: el DAC se dibuja corrido por su retardo
+        linea_dac.set_data([ti + DAC_RETARDO_S for ti in t], d)   # el DAC se dibuja corrido por su retardo
         if MODO_PAGINA:                     # modo página: 0-10, después 10-20, 20-30...
             lo = (int(t[-1]) // VENTANA_S) * VENTANA_S
         else:                               # modo deslizante: el eje avanza con la señal
@@ -243,8 +243,8 @@ def actualizar(_):                          # se llama cada 50 ms
         estado.set_text("Monitoreo normal"); estado.set_color(C["verde"])
         alerta.set_facecolor("#2a323b"); alerta_txt.set_text("i"); alerta_txt.set_color(C["tenue"])
     info.set_text(f"ADC {e['x']}    líneas válidas: {e['validas']}    descartadas: {e['malas']}"
-                  f"    DAC con retardo de {DAC_RETARDO_S:g} s")   # CAMBIO: recuerda el retardo usado
-    return linea, linea_dac, num_rpm, num_resp, num_seg, estado, info   # CAMBIO: incluye la curva del DAC
+                  f"    DAC con retardo de {DAC_RETARDO_S:g} s")   # recuerda el retardo usado
+    return linea, linea_dac, num_rpm, num_resp, num_seg, estado, info   # incluye la curva del DAC
 
 
 ani = FuncAnimation(fig, actualizar, interval=50, cache_frame_data=False)  # animación
